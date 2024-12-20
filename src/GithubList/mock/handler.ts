@@ -1,4 +1,4 @@
-import { rest } from 'msw';
+import { http } from 'msw';
 
 const mockUsers = [
     {
@@ -16,10 +16,11 @@ const mockUsers = [
 ];
 
 export const handlers = [
-    rest.get('https://api.github.com/users', (req, res, ctx) => {
-        const since = parseInt(req.url.searchParams.get('since') || '0');
-        const perPage = parseInt(req.url.searchParams.get('per_page') || '10');
+    http.get('https://api.github.com/users', ({ request }) => {
+        const url = new URL(request.url);
+        const since = parseInt(url.searchParams.get('since') || '0');
+        const perPage = parseInt(url.searchParams.get('per_page') || '10');
 
-        return res(ctx.status(200), ctx.json(mockUsers.slice(since, since + perPage)));
+        return Response.json(mockUsers.slice(since, since + perPage));
     }),
 ];
