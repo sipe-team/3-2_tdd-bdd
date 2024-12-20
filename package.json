@@ -14,8 +14,12 @@
     "check": "biome check --apply ."
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.62.8",
+    "axios": "^1.7.9",
+    "msw": "^2.7.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.2"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
