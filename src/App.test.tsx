@@ -4,18 +4,18 @@ import App from './App';
 
 describe('App 컴포넌트', () => {
     // 기본 렌더링 테스트
-    it('should render the heading "Vite + React"', () => {
+    it('should render the heading "2주차 : TDD 연습해보기"', () => {
         render(<App />);
         const headingElement = screen.getByRole('heading', { level: 1 });
 
         // 정확한 텍스트 매칭
-        expect(headingElement).toHaveTextContent('Vite + React');
+        expect(headingElement).toHaveTextContent('2주차 : TDD 연습해보기');
     });
 
     // 헤딩 레벨 테스트
     it('should render the text in an h1 tag', () => {
         render(<App />);
-        const headingElement = screen.getByText('Vite + React');
+        const headingElement = screen.getByText('2주차 : TDD 연습해보기');
 
         // h1 태그인지 확인
         expect(headingElement.tagName).toBe('H1');
@@ -26,7 +26,7 @@ describe('App 컴포넌트', () => {
         render(<App />);
         const headingElement = screen.getByRole('heading', {
             level: 1,
-            name: 'Vite + React',
+            name: '2주차 : TDD 연습해보기',
         });
 
         expect(headingElement).toBeInTheDocument();
