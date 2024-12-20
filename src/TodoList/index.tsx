@@ -1,7 +1,7 @@
 interface Todo {
     id: string;
     text: string;
-    completed: boolean;
+    completpnpmed: boolean;
 }
 
 interface TodoListProps {
