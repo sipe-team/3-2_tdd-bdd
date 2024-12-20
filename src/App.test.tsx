@@ -26,7 +26,7 @@ describe('App 컴포넌트', () => {
         render(<App />);
         const headingElement = screen.getByRole('heading', {
             level: 1,
-            name: 'Vite + React'
+            name: 'Vite + React',
         });
 
         expect(headingElement).toBeInTheDocument();
