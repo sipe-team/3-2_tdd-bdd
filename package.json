@@ -6,16 +6,19 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint sipe-tdd-template",
     "preview": "vite preview",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "format": "biome format --write .",
+    "lint": "biome lint .",
+    "check": "biome check --apply ."
   },
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "@eslint/js": "^9.17.0",
     "@jest/types": "^29.6.3",
     "@testing-library/jest-dom": "^6.6.3",
