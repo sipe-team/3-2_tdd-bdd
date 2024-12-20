@@ -8,5 +8,8 @@ export default {
         '\\.(css|less|sass|scss)$': 'identity-obj-proxy',
         '^@/(.*)$': '<rootDir>/src/$1'
     },
-    setupFilesAfterEnv: ['<rootDir>/jest.setup.ts']
+    setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+    testEnvironmentOptions: {
+        customExportConditions: [''],
+    },
 };

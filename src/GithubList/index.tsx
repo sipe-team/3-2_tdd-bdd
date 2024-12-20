@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchGitHubUsers } from './api/github.ts';
-import { useGitHubUsersStore } from './store/useGithubUserStore.ts';
+import { fetchGitHubUsers } from './api/github';
+import { useGitHubUsersStore } from './store/useGithubUserStore';
 
 const GitHubUsers = () => {
     const { currentPage, perPage, setPage } = useGitHubUsersStore();
