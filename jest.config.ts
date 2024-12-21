@@ -12,10 +12,4 @@ export default {
     testEnvironmentOptions: {
         customExportConditions: [''],
     },
-    globals: {
-        'ts-jest': {
-            tsconfig: 'tsconfig.json'
-        }
-    },
-    types: ['jest', '@types/jest', '@testing-library/jest-dom', '@jest/globals']
 };
