@@ -5,7 +5,12 @@
     { "path": "./tsconfig.node.json"}
   ],
   "compilerOptions": {
-    "types": ["jest", "@testing-library/jest-dom", "node"],
+    "types": [
+      "jest",
+      "@testing-library/jest-dom",
+      "node",
+      "@jest/globals"
+    ],
     "esModuleInterop": true,
     "jsx": "react-jsx"
   }
