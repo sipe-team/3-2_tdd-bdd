@@ -3,7 +3,6 @@ import { isFunction } from './index';
 import isBrowser from './isBrowser';
 
 type TargetValue<T> = T | undefined | null;
-
 type TargetType = HTMLElement | Element | Window | Document;
 
 export type BasicTarget<T extends TargetType = Element> =
@@ -31,4 +30,16 @@ export function getTargetElement<T extends TargetType>(target: BasicTarget<T>, d
     }
 
     return targetElement;
+}
+
+export function getScrollElement(element: Element | Document): HTMLElement | Document {
+    if (!element) {
+        return document;
+    }
+
+    if (element === document || element === document.documentElement || element === document.body) {
+        return document;
+    }
+
+    return element as HTMLElement;
 }
