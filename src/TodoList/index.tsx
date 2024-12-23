@@ -1,13 +1,15 @@
 interface Todo {
     id: string;
     text: string;
-    completpnpmed: boolean;
+    completed: boolean;
 }
 
 interface TodoListProps {
     initialTodos?: Todo[];
     onTodoChange?: (todos: Todo[]) => void;
 }
+
+type FilterType = 'all' | 'active' | 'completed';
 
 /**
  *
