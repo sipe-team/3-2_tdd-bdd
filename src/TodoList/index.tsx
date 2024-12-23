@@ -15,8 +15,8 @@ interface TodoListProps {
 /**
  *
  * 할 일 입력 폼 (입력창 + 추가 버튼) => 완료
- * 할 일 목록 표시
- * 각 할 일 항목에 대한 완료 체크박스
+ * 할 일 목록 표시 => 완료
+ * 각 할 일 항목에 대한 완료 체크박스 => 완료
  * 삭제 버튼
  * 수정 기능
  * 필터링 기능 (전체/진행중/완료)
@@ -45,6 +45,12 @@ const TodoList: React.FC<TodoListProps> = ({ initialTodos = [], onTodoChange }) 
         onTodoChange?.([...todos, newTodo]);
     };
 
+    const handleToggleTodo = (id: string) => {
+        setTodos((prevTodos) =>
+            prevTodos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed } : todo)),
+        );
+    };
+
     return (
         <div className="max-w-2xl mx-auto p-4 space-y-4">
             <form className="flex gap-2" onSubmit={handleAddTodo}>
@@ -67,8 +73,15 @@ const TodoList: React.FC<TodoListProps> = ({ initialTodos = [], onTodoChange }) 
 
             <ul role="list" className="space-y-2">
                 {todos.map((todo) => (
-                    <li key={todo.id} className="flex items-center gap-2">
-                        {todo.text}
+                    <li key={todo.id} className="flex items-center gap-2 p-2 border rounded-lg">
+                        <input
+                            type="checkbox"
+                            checked={todo.completed}
+                            onChange={() => handleToggleTodo(todo.id)}
+                            className="w-5 h-5 text-blue-500 border-gray-300 rounded focus:ring-blue-500"
+                            aria-label={`${todo.text} 완료 여부`}
+                        />
+                        <span className={todo.completed ? 'line-through text-gray-500' : ''}>{todo.text}</span>
                     </li>
                 ))}
             </ul>
