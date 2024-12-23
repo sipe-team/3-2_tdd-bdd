@@ -10,7 +10,6 @@ describe('TodoList 컴포넌트', () => {
         expect(screen.getByRole('button', { name: /추가/i })).toBeInTheDocument();
     });
 
-    // 할 일 추가 테스트
     it('새로운 할 일을 추가할 수 있어야 한다', async () => {
         render(<TodoList />);
         const input = screen.getByRole('textbox', { name: /할 일 입력/i });
@@ -23,7 +22,6 @@ describe('TodoList 컴포넌트', () => {
         expect(within(todoList).getByText('리액트 공부하기')).toBeInTheDocument();
     });
 
-    // 빈 문자열 입력 방지 테스트
     it('빈 문자열은 추가할 수 없어야 한다', async () => {
         render(<TodoList />);
         const addButton = screen.getByRole('button', { name: /추가/i });
@@ -33,7 +31,6 @@ describe('TodoList 컴포넌트', () => {
         expect(todoList.children.length).toBe(0);
     });
 
-    // 할 일 완료 토글 테스트
     it('할 일의 완료 상태를 토글할 수 있어야 한다', async () => {
         render(<TodoList />);
         const input = screen.getByRole('textbox', { name: /할 일 입력/i });
@@ -47,7 +44,6 @@ describe('TodoList 컴포넌트', () => {
         expect(checkbox).toBeChecked();
     });
 
-    // 할 일 삭제 테스트
     it('할 일을 삭제할 수 있어야 한다', async () => {
         render(<TodoList />);
         const input = screen.getByRole('textbox', { name: /할 일 입력/i });
@@ -62,10 +58,8 @@ describe('TodoList 컴포넌트', () => {
         expect(screen.queryByText('리액트 공부하기')).not.toBeInTheDocument();
     });
 
-    // 필터링 테스트
     it('완료된 할 일만 필터링할 수 있어야 한다', async () => {
         render(<TodoList />);
-        // 두 개의 할 일 추가
         const input = screen.getByRole('textbox', { name: /할 일 입력/i });
         const addButton = screen.getByRole('button', { name: /추가/i });
 
@@ -75,20 +69,16 @@ describe('TodoList 컴포넌트', () => {
         await userEvent.type(input, '운동하기');
         await userEvent.click(addButton);
 
-        // 첫 번째 할 일만 완료로 표시
         const checkboxes = screen.getAllByRole('checkbox');
         await userEvent.click(checkboxes[0]);
 
-        // 완료된 할 일만 보기 필터 선택
         const completedFilter = screen.getByRole('radio', { name: /완료된 할 일/i });
         await userEvent.click(completedFilter);
 
-        // 완료된 할 일만 보여야 함
         expect(screen.getByText('리액트 공부하기')).toBeInTheDocument();
         expect(screen.queryByText('운동하기')).not.toBeInTheDocument();
     });
 
-    // 할 일 수정 테스트
     it('할 일의 내용을 수정할 수 있어야 한다', async () => {
         render(<TodoList />);
         const input = screen.getByRole('textbox', { name: /할 일 입력/i });
@@ -110,10 +100,8 @@ describe('TodoList 컴포넌트', () => {
         expect(screen.getByText('리액트 마스터하기')).toBeInTheDocument();
     });
 
-    // 전체 선택 테스트
     it('모든 할 일을 한 번에 완료/미완료로 표시할 수 있어야 한다', async () => {
         render(<TodoList />);
-        // 여러 개의 할 일 추가
         const input = screen.getByRole('textbox', { name: /할 일 입력/i });
         const addButton = screen.getByRole('button', { name: /추가/i });
 
@@ -133,7 +121,6 @@ describe('TodoList 컴포넌트', () => {
         });
     });
 
-    // 할 일 개수 표시 테스트
     it('남은 할 일 개수가 올바르게 표시되어야 한다', async () => {
         render(<TodoList />);
         const input = screen.getByRole('textbox', { name: /할 일 입력/i });
@@ -151,7 +138,6 @@ describe('TodoList 컴포넌트', () => {
         expect(screen.getByText(/남은 할 일: 1개/i)).toBeInTheDocument();
     });
 
-    // 중복 할 일 방지 테스트
     it('동일한 내용의 할 일은 추가할 수 없어야 한다', async () => {
         render(<TodoList />);
         const input = screen.getByRole('textbox', { name: /할 일 입력/i });
@@ -168,13 +154,11 @@ describe('TodoList 컴포넌트', () => {
         expect(items.length).toBe(1);
     });
 
-    // 할 일 우선순위 변경 테스트
     it('할 일의 순서를 변경할 수 있어야 한다', async () => {
         render(<TodoList />);
         const input = screen.getByRole('textbox', { name: /할 일 입력/i });
         const addButton = screen.getByRole('button', { name: /추가/i });
 
-        // 두 개의 할 일 추가
         await userEvent.type(input, '첫 번째 할 일');
         await userEvent.click(addButton);
         await userEvent.clear(input);

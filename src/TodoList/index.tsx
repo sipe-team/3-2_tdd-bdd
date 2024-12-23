@@ -12,6 +12,8 @@ interface TodoListProps {
     onTodoChange?: (todos: Todo[]) => void;
 }
 
+type FilterType = 'all' | 'active' | 'completed';
+
 /**
  *
  * 할 일 입력 폼 (입력창 + 추가 버튼) => 완료
@@ -19,7 +21,7 @@ interface TodoListProps {
  * 각 할 일 항목에 대한 완료 체크박스 => 완료
  * 삭제 버튼 => 완료
  * 수정 기능
- * 필터링 기능 (전체/진행중/완료)
+ * 필터링 기능 (전체/진행중/완료) => 완료
  * 전체 선택/해제 버튼
  * 남은 할 일 개수 표시
  * 할 일 순서 변경 기능
@@ -29,6 +31,7 @@ interface TodoListProps {
 const TodoList: React.FC<TodoListProps> = ({ initialTodos = [], onTodoChange }) => {
     const [todos, setTodos] = useState<Todo[]>(initialTodos);
     const [newTodoText, setNewTodoText] = useState<string>('');
+    const [filter, setFilter] = useState<FilterType>('all');
 
     const handleAddTodo = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -46,9 +49,9 @@ const TodoList: React.FC<TodoListProps> = ({ initialTodos = [], onTodoChange }) 
     };
 
     const handleToggleTodo = (id: string) => {
-        setTodos((prevTodos) =>
-            prevTodos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed } : todo)),
-        );
+        const updatedTodos = todos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed } : todo));
+        setTodos(updatedTodos);
+        onTodoChange?.(updatedTodos);
     };
 
     const handleDeleteTodo = (id: string) => {
@@ -56,6 +59,12 @@ const TodoList: React.FC<TodoListProps> = ({ initialTodos = [], onTodoChange }) 
         setTodos(updatedTodos);
         onTodoChange?.(updatedTodos);
     };
+
+    const filteredTodos = todos.filter((todo) => {
+        if (filter === 'active') return !todo.completed;
+        if (filter === 'completed') return todo.completed;
+        return true;
+    });
 
     return (
         <div className="max-w-2xl mx-auto p-4 space-y-4">
@@ -77,8 +86,41 @@ const TodoList: React.FC<TodoListProps> = ({ initialTodos = [], onTodoChange }) 
                 </button>
             </form>
 
+            <div className="flex gap-4 p-2 bg-gray-50 rounded-lg">
+                <label className="flex items-center gap-2">
+                    <input
+                        type="radio"
+                        name="filter"
+                        checked={filter === 'all'}
+                        onChange={() => setFilter('all')}
+                        className="text-blue-500 focus:ring-blue-500"
+                    />
+                    <span>전체</span>
+                </label>
+                <label className="flex items-center gap-2">
+                    <input
+                        type="radio"
+                        name="filter"
+                        checked={filter === 'active'}
+                        onChange={() => setFilter('active')}
+                        className="text-blue-500 focus:ring-blue-500"
+                    />
+                    <span>진행중</span>
+                </label>
+                <label className="flex items-center gap-2">
+                    <input
+                        type="radio"
+                        name="filter"
+                        checked={filter === 'completed'}
+                        onChange={() => setFilter('completed')}
+                        className="text-blue-500 focus:ring-blue-500"
+                    />
+                    <span>완료된 할 일</span>
+                </label>
+            </div>
+
             <ul role="list" className="space-y-2">
-                {todos.map((todo) => (
+                {filteredTodos.map((todo) => (
                     <li key={todo.id} className="flex items-center justify-between gap-2 p-2 border rounded-lg">
                         <div className="flex items-center gap-2">
                             <input
