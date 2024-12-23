@@ -4,7 +4,7 @@ import { useState } from 'react';
 interface Todo {
     id: string;
     text: string;
-    completpnpmed: boolean;
+    completed: boolean;
 }
 
 interface TodoListProps {
@@ -30,14 +30,24 @@ const TodoList: React.FC<TodoListProps> = ({ initialTodos = [], onTodoChange }) 
     const [todos, setTodos] = useState<Todo[]>(initialTodos);
     const [newTodoText, setNewTodoText] = useState<string>('');
 
+    const handleAddTodo = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!newTodoText.trim()) {
+            return;
+        }
+        const newTodo: Todo = {
+            id: new Date().getTime().toString(),
+            text: newTodoText,
+            completed: false,
+        };
+        setTodos((prevTodos) => [...prevTodos, newTodo]);
+        setNewTodoText('');
+        onTodoChange?.([...todos, newTodo]);
+    };
+
     return (
         <div className="max-w-2xl mx-auto p-4 space-y-4">
-            <form
-                className="flex gap-2"
-                onSubmit={(e) => {
-                    e.preventDefault();
-                }}
-            >
+            <form className="flex gap-2" onSubmit={handleAddTodo}>
                 <input
                     type="text"
                     aria-label="할 일 입력"
@@ -54,6 +64,14 @@ const TodoList: React.FC<TodoListProps> = ({ initialTodos = [], onTodoChange }) 
                     추가
                 </button>
             </form>
+
+            <ul role="list" className="space-y-2">
+                {todos.map((todo) => (
+                    <li key={todo.id} className="flex items-center gap-2">
+                        {todo.text}
+                    </li>
+                ))}
+            </ul>
         </div>
     );
 };
