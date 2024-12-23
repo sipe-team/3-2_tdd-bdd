@@ -1,4 +1,3 @@
-import type React from 'react';
 import { useState } from 'react';
 
 interface Todo {
@@ -14,43 +13,38 @@ interface TodoListProps {
 
 type FilterType = 'all' | 'active' | 'completed';
 
-/**
- *
- * 할 일 입력 폼 (입력창 + 추가 버튼) => 완료
- * 할 일 목록 표시 => 완료
- * 각 할 일 항목에 대한 완료 체크박스 => 완료
- * 삭제 버튼 => 완료
- * 수정 기능 => 완료
- * 필터링 기능 (전체/진행중/완료) => 완료
- * 전체 선택/해제 버튼 => 완료
- * 남은 할 일 개수 표시 => 완료
- * 할 일 순서 변경 기능
- *
- **/
-
 const TodoList: React.FC<TodoListProps> = ({ initialTodos = [], onTodoChange }) => {
     const [todos, setTodos] = useState<Todo[]>(initialTodos);
-    const [newTodoText, setNewTodoText] = useState<string>('');
+    const [newTodoText, setNewTodoText] = useState('');
     const [filter, setFilter] = useState<FilterType>('all');
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editText, setEditText] = useState('');
+    const [error, setError] = useState<string>('');
 
-    const activeTodosCount = todos.filter((todo) => !todo.completed).length;
-    const hasAnyTodos = todos.length > 0;
-
-    const handleAddTodo = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleAddTodo = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newTodoText.trim()) {
+        setError('');
+
+        const trimmedText = newTodoText.trim();
+        if (!trimmedText) {
             return;
         }
+
+        if (todos.some((todo) => todo.text === trimmedText)) {
+            setError('이미 존재하는 할 일입니다.');
+            return;
+        }
+
         const newTodo: Todo = {
-            id: new Date().getTime().toString(),
-            text: newTodoText,
+            id: Date.now().toString(),
+            text: trimmedText,
             completed: false,
         };
-        setTodos((prevTodos) => [...prevTodos, newTodo]);
+
+        const updatedTodos = [...todos, newTodo];
+        setTodos(updatedTodos);
         setNewTodoText('');
-        onTodoChange?.([...todos, newTodo]);
+        onTodoChange?.(updatedTodos);
     };
 
     const handleToggleTodo = (id: string) => {
@@ -83,12 +77,34 @@ const TodoList: React.FC<TodoListProps> = ({ initialTodos = [], onTodoChange }) 
     const handleEditTodo = (id: string) => {
         if (!editText.trim()) return;
 
+        if (todos.some((todo) => todo.id !== id && todo.text === editText.trim())) {
+            setError('이미 존재하는 할 일입니다.');
+            return;
+        }
+
         const updatedTodos = todos.map((todo) => (todo.id === id ? { ...todo, text: editText.trim() } : todo));
         setTodos(updatedTodos);
         setEditingId(null);
         setEditText('');
         onTodoChange?.(updatedTodos);
     };
+
+    const moveTodo = (id: string, direction: 'up' | 'down') => {
+        const index = todos.findIndex((todo) => todo.id === id);
+        if ((direction === 'up' && index === 0) || (direction === 'down' && index === todos.length - 1)) {
+            return;
+        }
+
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        const updatedTodos = [...todos];
+        [updatedTodos[index], updatedTodos[newIndex]] = [updatedTodos[newIndex], updatedTodos[index]];
+
+        setTodos(updatedTodos);
+        onTodoChange?.(updatedTodos);
+    };
+
+    const activeTodosCount = todos.filter((todo) => !todo.completed).length;
+    const hasAnyTodos = todos.length > 0;
 
     const filteredTodos = todos.filter((todo) => {
         if (filter === 'active') return !todo.completed;
@@ -112,6 +128,9 @@ const TodoList: React.FC<TodoListProps> = ({ initialTodos = [], onTodoChange }) 
                 )}
             </div>
 
+            {error && (
+                <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg">{error}</div>
+            )}
             <form className="flex gap-2" onSubmit={handleAddTodo}>
                 <input
                     type="text"
@@ -164,9 +183,29 @@ const TodoList: React.FC<TodoListProps> = ({ initialTodos = [], onTodoChange }) 
             </div>
 
             <ul role="list" className="space-y-2">
-                {filteredTodos.map((todo) => (
+                {filteredTodos.map((todo, index) => (
                     <li key={todo.id} className="flex items-center justify-between gap-2 p-2 border rounded-lg">
                         <div className="flex items-center gap-2 flex-1">
+                            <div className="flex flex-col gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => moveTodo(todo.id, 'up')}
+                                    aria-label="위로"
+                                    disabled={index === 0}
+                                    className="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                                >
+                                    ▲
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => moveTodo(todo.id, 'down')}
+                                    aria-label="아래로"
+                                    disabled={index === filteredTodos.length - 1}
+                                    className="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                                >
+                                    ▼
+                                </button>
+                            </div>
                             <input
                                 type="checkbox"
                                 checked={todo.completed}
@@ -221,4 +260,5 @@ const TodoList: React.FC<TodoListProps> = ({ initialTodos = [], onTodoChange }) 
         </div>
     );
 };
+
 export default TodoList;
