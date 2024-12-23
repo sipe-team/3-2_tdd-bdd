@@ -22,8 +22,8 @@ type FilterType = 'all' | 'active' | 'completed';
  * 삭제 버튼 => 완료
  * 수정 기능 => 완료
  * 필터링 기능 (전체/진행중/완료) => 완료
- * 전체 선택/해제 버튼
- * 남은 할 일 개수 표시
+ * 전체 선택/해제 버튼 => 완료
+ * 남은 할 일 개수 표시 => 완료
  * 할 일 순서 변경 기능
  *
  **/
@@ -34,6 +34,9 @@ const TodoList: React.FC<TodoListProps> = ({ initialTodos = [], onTodoChange }) 
     const [filter, setFilter] = useState<FilterType>('all');
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editText, setEditText] = useState('');
+
+    const activeTodosCount = todos.filter((todo) => !todo.completed).length;
+    const hasAnyTodos = todos.length > 0;
 
     const handleAddTodo = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -52,6 +55,16 @@ const TodoList: React.FC<TodoListProps> = ({ initialTodos = [], onTodoChange }) 
 
     const handleToggleTodo = (id: string) => {
         const updatedTodos = todos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed } : todo));
+        setTodos(updatedTodos);
+        onTodoChange?.(updatedTodos);
+    };
+
+    const handleToggleAll = () => {
+        const allCompleted = todos.every((todo) => todo.completed);
+        const updatedTodos = todos.map((todo) => ({
+            ...todo,
+            completed: !allCompleted,
+        }));
         setTodos(updatedTodos);
         onTodoChange?.(updatedTodos);
     };
@@ -85,6 +98,20 @@ const TodoList: React.FC<TodoListProps> = ({ initialTodos = [], onTodoChange }) 
 
     return (
         <div className="max-w-2xl mx-auto p-4 space-y-4">
+            <div className="flex justify-between items-center">
+                <div className="text-sm text-gray-600">남은 할 일: {activeTodosCount}개</div>
+                {hasAnyTodos && (
+                    <button
+                        type="button"
+                        onClick={handleToggleAll}
+                        aria-label="전체 선택"
+                        className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    >
+                        {todos.every((todo) => todo.completed) ? '전체 해제' : '전체 선택'}
+                    </button>
+                )}
+            </div>
+
             <form className="flex gap-2" onSubmit={handleAddTodo}>
                 <input
                     type="text"
