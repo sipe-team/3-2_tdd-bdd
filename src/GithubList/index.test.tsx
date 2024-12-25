@@ -1,33 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
 import GitHubUsers from './index';
 
-// Mock data
-const mockUsers = [
-    {
-        id: 1,
-        login: 'user1',
-        avatar_url: 'https://example.com/avatar1.jpg',
-        html_url: 'https://github.com/user1',
-    },
-    {
-        id: 2,
-        login: 'user2',
-        avatar_url: 'https://example.com/avatar2.jpg',
-        html_url: 'https://github.com/user2',
-    },
-];
-
-// MSW 서버 설정
-const server = setupServer(
-    http.get('https://api.github.com/users', () => {
-        return HttpResponse.json(mockUsers);
-    }),
-);
-
-// 테스트 환경 설정
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
@@ -39,16 +13,6 @@ const queryClient = new QueryClient({
 const renderWithProviders = (ui: React.ReactElement) => {
     return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
 };
-
-// 테스트 시작 전 서버 시작
-beforeAll(() => server.listen());
-// 각 테스트 후 핸들러 리셋
-afterEach(() => {
-    server.resetHandlers();
-    queryClient.clear();
-});
-// 모든 테스트 후 서버 종료
-afterAll(() => server.close());
 
 describe('GitHubUsers 컴포넌트', () => {
     it('로딩 상태를 보여줘야 한다', () => {
