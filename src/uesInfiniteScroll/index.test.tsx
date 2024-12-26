@@ -200,6 +200,7 @@ describe('useInfiniteScroll 훅 테스트', () => {
 
         expect(result.current.data?.list).toMatchObject([4, 5, 6, 1, 2, 3]);
 
+        // 더 이상 데이터가 없을 때는 동작하지 않아야 함
         expect(result.current.noMore).toBe(true);
         act(() => {
             events['scroll']();
@@ -411,6 +412,7 @@ describe('useInfiniteScroll 훅 테스트', () => {
     });
 
     it('리스트가 null 또는 undefined일 수 있다', async () => {
+        // @ts-ignore
         const { result } = setup(async function () {
             await sleep(1000);
             count++;
