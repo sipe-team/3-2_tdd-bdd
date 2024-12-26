@@ -19,7 +19,6 @@ export async function mockRequest() {
 
 const targetEl = document.createElement('div');
 
-// 타겟 엘리먼트의 속성 설정 헬퍼 함수
 function setTargetInfo(key: 'scrollTop', value) {
     Object.defineProperty(targetEl, key, {
         value,
@@ -119,7 +118,6 @@ describe('useInfiniteScroll 훅 테스트', () => {
             isNoMore: (d) => d?.nextId === undefined,
         });
 
-        // 로딩 중일 때는 동작하지 않아야 함
         expect(result.current.loading).toBe(true);
         events['scroll']();
         await act(async () => {
@@ -140,14 +138,12 @@ describe('useInfiniteScroll 훅 테스트', () => {
         });
         expect(result.current.loadingMore).toBe(false);
 
-        // 더 이상 데이터가 없을 때는 동작하지 않아야 함
         expect(result.current.noMore).toBe(true);
         act(() => {
             events['scroll']();
         });
         expect(result.current.loadingMore).toBe(false);
 
-        // 데이터가 순서대로 로드되어야 함
         expect(result.current.data?.list).toMatchObject([1, 2, 3, 4, 5, 6]);
 
         mockAddEventListener.mockRestore();
@@ -176,7 +172,6 @@ describe('useInfiniteScroll 훅 테스트', () => {
             isNoMore: (d) => d?.nextId === undefined,
         });
 
-        // 로딩 중일 때는 동작하지 않아야 함
         expect(result.current.loading).toBe(true);
         events['scroll']();
         await act(async () => {
@@ -184,7 +179,6 @@ describe('useInfiniteScroll 훅 테스트', () => {
         });
         expect(result.current.loading).toBe(false);
 
-        // 첫 번째 스크롤 모의
         const scrollHeightSpy = jest.spyOn(targetEl, 'scrollHeight', 'get').mockImplementation(() => 150);
         const clientHeightSpy = jest.spyOn(targetEl, 'clientHeight', 'get').mockImplementation(() => 500);
         setTargetInfo('scrollTop', 300);
@@ -192,7 +186,6 @@ describe('useInfiniteScroll 훅 테스트', () => {
         act(() => {
             events['scroll']();
         });
-        // 위로 스크롤 모의
         setTargetInfo('scrollTop', 50);
 
         act(() => {
@@ -205,10 +198,8 @@ describe('useInfiniteScroll 훅 테스트', () => {
         });
         expect(result.current.loadingMore).toBe(false);
 
-        // 역순으로 데이터가 로드되어야 함
         expect(result.current.data?.list).toMatchObject([4, 5, 6, 1, 2, 3]);
 
-        // 더 이상 데이터가 없을 때는 동작하지 않아야 함
         expect(result.current.noMore).toBe(true);
         act(() => {
             events['scroll']();
@@ -420,7 +411,6 @@ describe('useInfiniteScroll 훅 테스트', () => {
     });
 
     it('리스트가 null 또는 undefined일 수 있다', async () => {
-        // @ts-ignore
         const { result } = setup(async function () {
             await sleep(1000);
             count++;
