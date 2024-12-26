@@ -1,9 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import * as githubApi from './api/github';
 import GitHubUsers from './index';
 
-// Mock 데이터 정의
 const mockUsers = [
     {
         login: 'mojombo',
@@ -25,115 +24,131 @@ const mockUsers = [
     },
 ];
 
-// Github API 모킹
-jest.mock('./api/github', () => ({
-    fetchGitHubUsers: jest.fn(),
-}));
+jest.mock('./api/github');
 
-const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            retry: false,
+const createTestQueryClient = () =>
+    new QueryClient({
+        defaultOptions: {
+            queries: {
+                retry: false, // 재시도 비활성화
+                gcTime: 0, // 캐시 비활성화
+                staleTime: 0, // 데이터를 항상 stale하게 처리
+                refetchOnMount: false, // 마운트시 재요청 비활성화
+                refetchOnWindowFocus: false, // 윈도우 포커스시 재요청 비활성화
+                refetchOnReconnect: false, // 재연결시 재요청 비활성화
+            },
+            mutations: {
+                retry: false,
+            },
         },
-    },
-});
+    });
+
+interface WrapperProps {
+    children: React.ReactNode;
+}
+
+function TestWrapper({ children }: WrapperProps) {
+    const queryClient = createTestQueryClient();
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
 
 const renderWithProviders = (ui: React.ReactElement) => {
-    return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+    return render(ui, { wrapper: TestWrapper });
 };
 
 describe('GitHubUsers 컴포넌트', () => {
+    beforeAll(() => {
+        jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterAll(() => {
+        (console.error as jest.Mock).mockRestore();
+    });
+
     beforeEach(() => {
-        // 각 테스트 전에 queryClient 초기화
-        queryClient.clear();
-        // API 모킹 초기화
         jest.clearAllMocks();
     });
 
     it('로딩 상태를 보여줘야 한다', () => {
-        // API가 응답하기 전의 로딩 상태 테스트
-        (githubApi.fetchGitHubUsers as jest.Mock).mockImplementation(
-            () => new Promise(() => {}), // 영원히 해결되지 않는 프로미스
-        );
+        (githubApi.fetchGitHubUsers as jest.Mock).mockImplementation(() => new Promise(() => {}));
 
         renderWithProviders(<GitHubUsers />);
         expect(screen.getByTestId('loading-indicator')).toBeInTheDocument();
     });
 
     it('사용자 목록을 렌더링해야 한다', async () => {
-        // 성공적인 API 응답 모킹
         (githubApi.fetchGitHubUsers as jest.Mock).mockResolvedValue(mockUsers);
 
         renderWithProviders(<GitHubUsers />);
 
-        // 사용자 목록이 로드될 때까지 대기
         await waitFor(() => {
             mockUsers.forEach((user) => {
-                expect(screen.getByTestId(`user-row-${user.id}`)).toBeInTheDocument();
-            });
-        });
+                const row = screen.getByTestId(`user-row-${user.id}`);
 
-        // 각 사용자의 정보가 올바르게 표시되는지 확인
-        mockUsers.forEach((user) => {
-            expect(screen.getByText(user.login)).toBeInTheDocument();
-            expect(screen.getByAltText(`${user.login}'s avatar`)).toBeInTheDocument();
-            const profileLinks = screen.getAllByRole('link', { name: '프로필 보기' });
-            const userProfileLink = profileLinks.find((link) => link.getAttribute('href') === user.html_url);
-            expect(userProfileLink).toHaveAttribute('href', user.html_url);
+                const { getByAltText, getByText, getByRole } = within(row);
+
+                expect(getByAltText(`${user.login}'s avatar`)).toBeInTheDocument();
+
+                expect(getByText(user.login)).toBeInTheDocument();
+
+                const profileLink = getByRole('link', { name: '프로필 보기' });
+                expect(profileLink).toHaveAttribute('href', user.html_url);
+                expect(profileLink).toHaveAttribute('target', '_blank');
+                expect(profileLink).toHaveAttribute('rel', 'noopener noreferrer');
+            });
         });
     });
 
     it('에러 상태를 보여줘야 한다', async () => {
-        // API 에러 응답 모킹
-        (githubApi.fetchGitHubUsers as jest.Mock).mockRejectedValue(new Error('API Error'));
+        const errorMessage = 'API Error';
+        (githubApi.fetchGitHubUsers as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
         renderWithProviders(<GitHubUsers />);
 
-        // 에러 메시지 확인
         await waitFor(() => {
             expect(screen.getByText('에러가 발생했습니다. 다시 시도해주세요.')).toBeInTheDocument();
         });
     });
 
-    it('페이지네이션이 동작해야 한다', async () => {
-        // 첫 번째 페이지 데이터 모킹
-        (githubApi.fetchGitHubUsers as jest.Mock).mockResolvedValueOnce(mockUsers);
+    describe('페이지네이션', () => {
+        it('초기 페이지에서는 이전 버튼이 비활성화되어야 한다', async () => {
+            (githubApi.fetchGitHubUsers as jest.Mock).mockResolvedValue(mockUsers);
 
-        renderWithProviders(<GitHubUsers />);
+            renderWithProviders(<GitHubUsers />);
 
-        // 초기 페이지 확인
-        await waitFor(() => {
-            expect(screen.getByText('페이지 1')).toBeInTheDocument();
+            await waitFor(() => {
+                const prevButton = screen.getByRole('button', { name: '이전' });
+                expect(prevButton).toBeDisabled();
+            });
         });
 
-        // 다음 페이지 데이터 모킹
-        (githubApi.fetchGitHubUsers as jest.Mock).mockResolvedValueOnce([
-            // 다른 페이지의 mock 데이터
-            {
-                login: 'ezmobius',
-                id: 5,
-                avatar_url: 'https://avatars.githubusercontent.com/u/5?v=4',
-                html_url: 'https://github.com/ezmobius',
-            },
-        ]);
+        it('페이지 이동이 정상적으로 동작해야 한다', async () => {
+            (githubApi.fetchGitHubUsers as jest.Mock).mockResolvedValueOnce(mockUsers);
 
-        // 다음 페이지 버튼 클릭
-        fireEvent.click(screen.getByText('다음'));
+            renderWithProviders(<GitHubUsers />);
 
-        // 페이지 변경 확인
-        await waitFor(() => {
-            expect(screen.getByText('페이지 2')).toBeInTheDocument();
-        });
+            await waitFor(() => {
+                expect(screen.getByText('페이지 1')).toBeInTheDocument();
+            });
 
-        // 이전 페이지 데이터 모킹
-        (githubApi.fetchGitHubUsers as jest.Mock).mockResolvedValueOnce(mockUsers);
+            const nextPageMockUsers = [
+                {
+                    login: 'ezmobius',
+                    id: 5,
+                    avatar_url: 'https://avatars.githubusercontent.com/u/5?v=4',
+                    html_url: 'https://github.com/ezmobius',
+                },
+            ];
+            (githubApi.fetchGitHubUsers as jest.Mock).mockResolvedValueOnce(nextPageMockUsers);
 
-        // 이전 페이지 버튼 클릭
-        fireEvent.click(screen.getByText('이전'));
+            fireEvent.click(screen.getByRole('button', { name: '다음' }));
 
-        // 페이지 변경 확인
-        await waitFor(() => {
-            expect(screen.getByText('페이지 1')).toBeInTheDocument();
+            await waitFor(() => {
+                expect(screen.getByText('페이지 2')).toBeInTheDocument();
+                expect(screen.getByTestId('user-row-5')).toBeInTheDocument();
+            });
+
+            expect(githubApi.fetchGitHubUsers).toHaveBeenCalledWith(2, 10);
         });
     });
 });
