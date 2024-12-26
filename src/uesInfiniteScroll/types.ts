@@ -1,21 +1,26 @@
 import type { DependencyList } from 'react';
 import type { BasicTarget } from '../utils/domTarget';
 
-export type Data = { list: any[]; [key: string]: any };
+export type Data<T = unknown> = {
+    list: T[];
+    nextId?: number;
+    hasMore?: boolean;
+    [key: string]: T[] | number | boolean | undefined;
+};
 
 export type Service<TData extends Data> = (currentData?: TData) => Promise<TData>;
 
 export interface InfiniteScrollResult<TData extends Data> {
-    data: TData;
+    data?: TData;
     loading: boolean;
     loadingMore: boolean;
     error?: Error;
     noMore: boolean;
 
     loadMore: () => void;
-    loadMoreAsync: () => Promise<TData>;
+    loadMoreAsync: () => Promise<TData | undefined>;
     reload: () => void;
-    reloadAsync: () => Promise<TData>;
+    reloadAsync: () => Promise<TData | undefined>;
     cancel: () => void;
     mutate: (data?: TData) => void;
 }

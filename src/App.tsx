@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import useInfiniteScroll from './uesInfiniteScroll';
+import type { Data } from './uesInfiniteScroll/types.ts';
 
 interface Post {
     id: number;
@@ -7,8 +8,7 @@ interface Post {
     content: string;
 }
 
-interface PostListResponse {
-    list: Post[];
+interface PostListResponse extends Data<Post> {
     nextId?: number;
     hasMore: boolean;
 }
@@ -17,7 +17,7 @@ interface PostListResponse {
 const fetchPosts = async (currentData?: PostListResponse): Promise<PostListResponse> => {
     // 실제로는 API 호출을 하겠지만, 예제를 위해 가상의 데이터를 생성
     const pageSize = 10;
-    const startId = currentData ? currentData.nextId : 1;
+    const startId = currentData?.nextId ?? 1;
 
     // 50개 정도만 생성하도록 제한
     if (startId > 50) {

@@ -74,7 +74,9 @@ export default function useInfiniteScroll<TData extends Data = Data>(
                 setLoadingMore(true);
             }
 
-            isFunction(onBefore) && onBefore();
+            if (isFunction(onBefore)) {
+                onBefore();
+            }
 
             const responseData = await service(currentData);
 
@@ -115,12 +117,16 @@ export default function useInfiniteScroll<TData extends Data = Data>(
             hasMoreRef.current = !isNoMoreData;
             setNoMore(isNoMoreData);
 
-            isFunction(onSuccess) && onSuccess(responseData);
+            if (isFunction(onSuccess)) {
+                onSuccess(responseData);
+            }
             return responseData;
         } catch (e) {
             const currentError = e instanceof Error ? e : new Error(String(e));
             setError(currentError);
-            isFunction(onError) && onError(currentError);
+            if (isFunction(onError)) {
+                onError(currentError);
+            }
             throw currentError;
         } finally {
             if (!isLoadMore) {
@@ -128,7 +134,9 @@ export default function useInfiniteScroll<TData extends Data = Data>(
             } else {
                 setLoadingMore(false);
             }
-            isFunction(onFinally) && onFinally(data, error);
+            if (isFunction(onFinally)) {
+                onFinally(data, error);
+            }
         }
     };
 
