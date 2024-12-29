@@ -50,22 +50,40 @@ import Counter from '.';
 // });
 
 describe('Counter 컴포넌트 UI 테스트', () => {
-    it('제목이 "카운터"로 표시되어야 한다', () => {
-        render(<Counter />);
+    const setup = (props = {}) => {
+        const user = userEvent.setup();
+        render(<Counter {...props} />);
+        
+        return {
+            user,
+            heading: screen.getByRole('heading', { level: 2, name: '카운터' }),
+            countDisplay: screen.getByTestId('count-display'),
+            buttons: {
+                increment: screen.getByTestId('increment-button'),
+                decrement: screen.getByTestId('decrement-button'),
+                reset: screen.getByTestId('reset-button'),
+                undo: screen.getByTestId('undo-button'),
+            },
+            historyDisplay: screen.getByTestId('history-display'),
+            getAllButtons: () => screen.getAllByRole('button'),
+        };
+    };
 
-        expect(screen.getByRole('heading', {level: 2, name: '카운터'})).toBeInTheDocument();
+    it('제목이 "카운터"로 표시되어야 한다', () => {
+        const { heading } = setup();
+        expect(heading).toBeInTheDocument();
     });
 
     it('숫자를 표시하는 영역이 있어야 한다', () => {
-        render(<Counter/>);
-
-        expect(screen.getByTestId('count-display')).toBeInTheDocument();
+        const { countDisplay } = setup();
+        expect(countDisplay).toBeInTheDocument();
     });
 
     it('버튼 그룹이 순서대로 [감소-증가-리셋-실행취소] 버튼을 포함해야 한다', () => {
         // 궁금증 : 두 가지 접근 방식 중 어떤 것이 더 좋은 테스트 방식인가요?
         // 1) button-group이라는 data-testid를 추가하고 within을 사용하여 그 안의 버튼들을 테스트
         // 2) 현재처럼 버튼의 role만으로 테스트
+        // (여기는 질문이 있어서 리팩토링을 하지 않았습니다.)
         
         render(<Counter />);
         const buttons = screen.getAllByRole('button');
@@ -78,92 +96,80 @@ describe('Counter 컴포넌트 UI 테스트', () => {
     });
 
     it('증가/감소 버튼에는 step 값이 표시되어야 한다', () => {
-        render(<Counter step={2} />);
-        const buttons = screen.getAllByRole('button');
-
-        expect(buttons[0]).toHaveTextContent('2만큼 감소');
-        expect(buttons[1]).toHaveTextContent('2만큼 증가');
+        const { buttons } = setup({ step: 2 });
+        expect(buttons.increment).toHaveTextContent('2만큼 증가');
+        expect(buttons.decrement).toHaveTextContent('2만큼 감소');
     });
 
     it('히스토리 영역에는 "최근 기록: "이라는 텍스트가 포함되어야 한다', () => {
-        render(<Counter />);
-        const historyDisplay = screen.getByTestId('history-display');
-
+        const { historyDisplay } = setup();
         expect(historyDisplay).toHaveTextContent('최근 기록: ');
     });
 
     describe('버튼 스타일', () => {
         it('모든 버튼은 동일한 크기여야 한다', () => {
-            render(<Counter />);
-            const btnGroup = screen.getAllByRole('button');
+            const { getAllButtons } = setup();
+            const buttons = getAllButtons();
 
-            btnGroup.forEach(button => {
+            buttons.forEach((button) => {
                 expect(button).toHaveClass('px-4');
                 expect(button).toHaveClass('py-2');
             });
         });
 
         it('비활성화된 버튼은 시각적으로 구분되어야 한다', async () => {
-            render(<Counter initialValue={0} step={1} maxValue={1} />);
-            
-            const incrementButton = screen.getByTestId('increment-button');
-            const decrementButton = screen.getByTestId('decrement-button');
-            const undoButton = screen.getByTestId('undo-button');
+            const { buttons } = setup({ initialValue: 0, step: 1, maxValue: 1 });
+            const { increment, decrement, undo } = buttons;
 
-            expect(decrementButton).toBeDisabled();
-            expect(undoButton).toBeDisabled();
-            expect(incrementButton).not.toBeDisabled();
-        
-            await userEvent.click(incrementButton);
-        
-            expect(incrementButton).toBeDisabled();
-            expect(decrementButton).not.toBeDisabled();
-            expect(undoButton).not.toBeDisabled();
+            expect(decrement).toBeDisabled();
+            expect(undo).toBeDisabled();
+            expect(increment).not.toBeDisabled();
+
+            await userEvent.click(increment);
+
+            expect(increment).toBeDisabled();
+            expect(decrement).not.toBeDisabled();
+            expect(undo).not.toBeDisabled();
         });
     });
 
     describe('숫자 표시 영역', () => {
         it('숫자는 중앙 정렬되어야 한다', () => {
-            render(<Counter />)
-            const countDisplay = screen.getByTestId('count-display');
-
+            const { countDisplay } = setup();
             expect(countDisplay).toHaveClass('flex', 'items-center', 'justify-center');
         });
     });
 
     describe('히스토리 표시', () => {
         it('히스토리는 쉼표로 구분되어 표시되어야 한다', async () => {
-            render(<Counter />);
-            const incrementButton = screen.getByTestId('increment-button');
-            const historyDisplay = screen.getByTestId('history-display');
+            const { buttons, historyDisplay } = setup();
+            const { increment } = buttons;
 
             const initialText = historyDisplay.textContent;
             expect(initialText).toMatch(/최근 기록: \d+$/);
 
-            await userEvent.click(incrementButton);
+            await userEvent.click(increment);
             const updatedText = historyDisplay.textContent;
             expect(updatedText).toMatch(/최근 기록: \d+(, \d+)+$/);
-            
-            await userEvent.click(incrementButton);
+
+            await userEvent.click(increment);
             const finalText = historyDisplay.textContent;
-            expect(finalText).toMatch(/최근 기록: \d+(, \d+)+(, \d+)+$/)
+            expect(finalText).toMatch(/최근 기록: \d+(, \d+)+(, \d+)+$/);
         });
 
         it('실행 취소 시 히스토리도 함께 업데이트되어야 한다', async () => {
-            render(<Counter />);
-            const incrementButton = screen.getByTestId('increment-button');
-            const undoButton = screen.getByTestId('undo-button'); 
-            const historyDisplay = screen.getByTestId('history-display');
+            const { buttons, historyDisplay } = setup();
+            const { increment, undo } = buttons;
 
             const initialText = historyDisplay.textContent;
             expect(initialText).toMatch(/최근 기록: \d+$/);
 
-            await userEvent.click(incrementButton);
-            await userEvent.click(incrementButton);
+            await userEvent.click(increment);
+            await userEvent.click(increment);
             const updatedText = historyDisplay.textContent;
             expect(updatedText).toMatch(/최근 기록: \d+(, \d+)+(, \d+)+$/);
 
-            await userEvent.click(undoButton);
+            await userEvent.click(undo);
             const undoText = historyDisplay.textContent;
             expect(undoText).toMatch(/최근 기록: \d+(, \d+)+$/);
         });
