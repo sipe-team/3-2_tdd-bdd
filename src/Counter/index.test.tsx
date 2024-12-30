@@ -2,52 +2,149 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Counter from '.';
 
-// describe('Counter 컴포넌트 기본 기능', () => {
-//     it('카운터가 초기값 0으로 렌더링되어야 한다', () => {
-//         render(<Counter />);
-//         expect(screen.getByTestId('count-display')).toHaveTextContent('0');
-//     });
+describe('Counter 컴포넌트 기본 기능', () => {
+    const setup = (props = {}) => {
+        const user = userEvent.setup();
+        render(<Counter {...props} />);
+        
+        return {
+            user,
+            heading: screen.getByRole('heading', { level: 2, name: '카운터' }),
+            countDisplay: screen.getByTestId('count-display'),
+            buttons: {
+                increment: screen.getByTestId('increment-button'),
+                decrement: screen.getByTestId('decrement-button'),
+                reset: screen.getByTestId('reset-button'),
+                undo: screen.getByTestId('undo-button'),
+            },
+            historyDisplay: screen.getByTestId('history-display'),
+            getAllButtons: () => screen.getAllByRole('button'),
+        };
+    };
+        
+    it('카운터가 초기값 0으로 렌더링되어야 한다', () => {
+        const { countDisplay } = setup();
+        expect(countDisplay).toHaveTextContent('0');
+    });
 
-//     it('증가 버튼 클릭시 기본 step 값(1)만큼 증가해야 한다', async () => {
-//         render(<Counter />);
-//         await userEvent.click(screen.getByTestId('increment-button'));
-//         expect(screen.getByTestId('count-display')).toHaveTextContent('1');
-//     });
+    it('증가 버튼 클릭시 기본 step 값(1)만큼 증가해야 한다', async () => {
+        const { buttons } = setup();
+        const { increment } = buttons;
 
-//     it('리셋 버튼 클릭시 초기값으로 돌아가야 한다', async () => {
-//         render(<Counter />);
-//         await userEvent.click(screen.getByTestId('increment-button'));
-//         await userEvent.click(screen.getByTestId('reset-button'));
-//         expect(screen.getByTestId('count-display')).toHaveTextContent('0');
-//     });
-//     it('커스텀 초기값이 정상적으로 적용되어야 한다', async () => {
-//         // 테스트 구현
-//     });
-//     it('설정된 step 값만큼 증가/감소해야 한다', async () => {
-//         // 테스트 구현
-//     });
-//     it('최대값에 도달하면 증가 버튼이 비활성화되어야 한다', async () => {
-//         // 테스트 구현
-//     });
-//     it('최소값에 도달하면 감소 버튼이 비활성화되어야 한다', async () => {
-//         // 테스트 구현
-//     });
-//     it('값이 변경될 때마다 onCountChange 콜백이 호출되어야 한다', async () => {
-//         // 테스트 구현
-//     });
-//     it('최대값 도달 시 onMaxReached 콜백이 호출되어야 한다', async () => {
-//         // 테스트 구현
-//     });
-//     it('실행 취소 버튼 클릭 시 이전 값으로 돌아가야 한다', async () => {
-//         // 테스트 구현
-//     });
-//     it('최근 3개의 값이 히스토리에 표시되어야 한다', async () => {
-//         // 테스트 구현
-//     });
-//     it('여러 번의 증가/감소 후 실행 취소가 정상적으로 동작해야 한다', async () => {
-//         // 테스트 구현
-//     });
-// });
+        await userEvent.click(increment);
+
+        expect(screen.getByTestId('count-display')).toHaveTextContent('1');
+    });
+
+    it('리셋 버튼 클릭시 초기값으로 돌아가야 한다', async () => {
+        const { buttons, countDisplay } = setup();
+        const { increment, reset } = buttons;
+
+        await userEvent.click(increment);
+        expect(countDisplay).toHaveTextContent('1');
+
+        await userEvent.click(reset);
+        expect(countDisplay).toHaveTextContent('0');
+    });
+
+    it('커스텀 초기값이 정상적으로 적용되어야 한다', async () => {
+        const { countDisplay, historyDisplay } = setup({ initialValue: 10 });
+        expect(countDisplay).toHaveTextContent('10');
+        expect(historyDisplay).toHaveTextContent('최근 기록: 10');
+    });
+
+    it('설정된 step 값만큼 증가/감소해야 한다', async () => {
+        const { buttons, countDisplay } = setup({ step: 2 });
+        const { increment, decrement } = buttons;
+
+        await userEvent.click(increment);
+        expect(countDisplay).toHaveTextContent('2');
+
+        await userEvent.click(decrement);
+        expect(countDisplay).toHaveTextContent('0');
+    });
+
+    it('최대값에 도달하면 증가 버튼이 비활성화되어야 한다', async () => {
+        const { buttons } = setup({ maxValue: 1 });
+        const { increment } = buttons;
+
+        await userEvent.click(increment);
+
+        expect(increment).toBeDisabled();
+    });
+
+    it('최소값에 도달하면 감소 버튼이 비활성화되어야 한다', async () => {
+        const { buttons } = setup({ maxValue: 1 });
+        const { increment, decrement } = buttons;
+
+        await userEvent.click(increment);
+        await userEvent.click(decrement)
+        
+        expect(decrement).toBeDisabled();
+    });
+
+    it('값이 변경될 때마다 onCountChange 콜백이 호출되어야 한다', async () => {
+        const handleCountChange = jest.fn();
+        const { buttons } = setup({ onCountChange: handleCountChange });
+        const { increment, decrement, reset } = buttons;
+    
+        await userEvent.click(increment);
+        expect(handleCountChange).toHaveBeenCalledWith(1);
+
+        await userEvent.click(decrement);
+        expect(handleCountChange).toHaveBeenCalledWith(0);
+
+        await userEvent.click(increment);
+        await userEvent.click(reset);
+        expect(handleCountChange).toHaveBeenCalledWith(0);
+        
+        expect(handleCountChange).toHaveBeenCalledTimes(4);
+    });
+
+    it('최대값 도달 시 onMaxReached 콜백이 호출되어야 한다', async () => {
+        const handleMaxReached = jest.fn();
+        const { buttons } = setup({ maxValue: 1, onMaxReached: handleMaxReached });
+        const { increment } = buttons;
+
+        await userEvent.click(increment);
+        expect(handleMaxReached).toHaveBeenCalled();
+    });
+
+    it('실행 취소 버튼 클릭 시 이전 값으로 돌아가야 한다', async () => {
+        const { buttons, countDisplay } = setup();
+        const { increment, undo } = buttons;
+
+        await userEvent.click(increment);
+        expect(countDisplay).toHaveTextContent('1');
+
+        await userEvent.click(undo);
+        expect(countDisplay).toHaveTextContent('0');
+    });
+
+    it('최근 3개의 값이 히스토리에 표시되어야 한다', async () => {
+        const { buttons, historyDisplay } = setup();
+        const { increment } = buttons;
+
+        await userEvent.click(increment);
+        await userEvent.click(increment);
+        await userEvent.click(increment);
+
+        expect(historyDisplay).toHaveTextContent('최근 기록: 1, 2, 3'); 
+    });
+
+    it('여러 번의 증가/감소 후 실행 취소가 정상적으로 동작해야 한다', async () => {
+        const { buttons, countDisplay } = setup();
+        const { increment, decrement, undo } = buttons;
+
+        await userEvent.click(increment);
+        await userEvent.click(increment);
+        await userEvent.click(increment);
+        await userEvent.click(decrement);
+        await userEvent.click(undo);
+
+        expect(countDisplay).toHaveTextContent('1');
+    });
+});
 
 describe('Counter 컴포넌트 UI 테스트', () => {
     const setup = (props = {}) => {
